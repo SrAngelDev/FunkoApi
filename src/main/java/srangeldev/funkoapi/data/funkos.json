@@ -1,0 +1,50 @@
+[
+  {
+    "nombre": "Spider-Man Classic",
+    "precio": 19.99,
+    "categoria": "MARVEL",
+    "fechaLanzamiento": "2020-05-12"
+  },
+  {
+    "nombre": "Pikachu Edición Limitada",
+    "precio": 24.5,
+    "categoria": "POKEMON",
+    "fechaLanzamiento": "2021-07-21"
+  },
+  {
+    "nombre": "Freddy Krueger Vintage",
+    "precio": 18.0,
+    "categoria": "TERROR",
+    "fechaLanzamiento": "2018-10-31"
+  },
+  {
+    "nombre": "Mario",
+    "precio": 12.5,
+    "categoria": "VIDEOJUEGOS",
+    "fechaLanzamiento": "2024-10-01"
+  },
+  {
+    "nombre": "Batman Animated Series",
+    "precio": 22.0,
+    "categoria": "MARVEL",
+    "fechaLanzamiento": "2019-03-15"
+  },
+  {
+    "nombre": "Charmander Glow",
+    "precio": 20.99,
+    "categoria": "POKEMON",
+    "fechaLanzamiento": "2022-02-10"
+  },
+  {
+    "nombre": "Jason Voorhees Retro",
+    "precio": 17.5,
+    "categoria": "TERROR",
+    "fechaLanzamiento": "2017-06-13"
+  },
+  {
+    "nombre": "Link (Breath of the Wild)",
+    "precio": 23.75,
+    "categoria": "VIDEOJUEGOS",
+    "fechaLanzamiento": "2023-05-12"
+  }
+]
