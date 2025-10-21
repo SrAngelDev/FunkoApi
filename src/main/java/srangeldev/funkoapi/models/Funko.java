@@ -1,5 +1,6 @@
 package srangeldev.funkoapi.models;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -32,8 +33,11 @@ public class Funko {
 
     private Double precio;
 
-    @Enumerated(EnumType.STRING)
+    @ManyToOne
+    @JoinColumn(name = "categoria_id", nullable = false)
+    @JsonManagedReference // Necesario para evitar recursividad en la serialización JSON
     private Categoria categoria;
+
     private LocalDate fechaLanzamiento;
 
     // Atributos internos (metadatos)
