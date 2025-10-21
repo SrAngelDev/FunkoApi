@@ -1,6 +1,6 @@
 package srangeldev.funkoapi.services;
 
-import srangeldev.funkoapi.dto.FunkoCreateDTO;
+import srangeldev.funkoapi.dto.FunkoRequestDto;
 import srangeldev.funkoapi.models.Funko;
 
 import java.util.List;
@@ -11,8 +11,8 @@ import java.util.List;
 public interface FunkoService {
     List<Funko> getAll();
     Funko getById(Long id);
-    Funko create(FunkoCreateDTO dto);
-    Funko update(Long id, FunkoCreateDTO dto);
-    Funko patch(Long id, FunkoCreateDTO dto);
+    Funko create(FunkoRequestDto dto);
+    Funko update(Long id, FunkoRequestDto dto);
+    Funko patch(Long id, FunkoRequestDto dto);
     void delete(Long id);
 }

@@ -1,11 +1,14 @@
 package srangeldev.funkoapi.services;
 
+import jakarta.transaction.Transactional;
+import lombok.val;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
-import srangeldev.funkoapi.dto.FunkoCreateDTO;
+import srangeldev.funkoapi.dto.FunkoRequestDto;
 import srangeldev.funkoapi.exceptions.FunkoNotFoundException;
 import srangeldev.funkoapi.models.Funko;
 import srangeldev.funkoapi.repositories.FunkoRepository;
@@ -23,13 +26,14 @@ public class FunkoServiceImpl implements FunkoService {
 
     private final FunkoRepository repository;
 
+    @Autowired
     public FunkoServiceImpl(FunkoRepository repository) {
         this.repository = repository;
     }
 
     @Override
     @CachePut(key = "#result.id")
-    public Funko create(FunkoCreateDTO dto) {
+    public Funko create(FunkoRequestDto dto) {
         // Validación simple extra (además de la de anotaciones)
         validarNegocio(dto);
         Funko funko = new Funko(null, dto.getNombre(), dto.getPrecio(), dto.getCategoria(), dto.getFechaLanzamiento(), null, null);
@@ -39,36 +43,66 @@ public class FunkoServiceImpl implements FunkoService {
     @Override
     @Cacheable(key = "#id")
     public Funko getById(Long id) {
-        return repository.getById(id).orElseThrow(() -> new FunkoNotFoundException(id));
+        return repository.findById(id).orElseThrow(() -> new FunkoNotFoundException(id));
     }
 
     @Override
     public List<Funko> getAll() {
         // Para la lista completa, no usamos caché para simplificar invalidaciones.
-        return repository.getAll();
+        return repository.findAll();
     }
 
     @Override
     @CachePut(key = "#id")
-    public Funko update(Long id, FunkoCreateDTO dto) {
+    @Transactional // Esto gestiona el ciclo de vida de la entidad para poder hacer update
+    public Funko update(Long id, FunkoRequestDto dto) {
         validarNegocio(dto);
-        Funko cambios = new Funko(null, dto.getNombre(), dto.getPrecio(), dto.getCategoria(), dto.getFechaLanzamiento(), null, null);
-        return repository.update(id, cambios).orElseThrow(() -> new FunkoNotFoundException(id));
+
+        // Primero obtenemos el funko a actulizar
+        Funko funkoExistente = repository.findById(id).orElseThrow(() -> new FunkoNotFoundException(id));
+
+        // Le pasamos los nuevos campos
+        funkoExistente.setNombre(dto.getNombre());
+        funkoExistente.setPrecio(dto.getPrecio());
+        funkoExistente.setCategoria(dto.getCategoria());
+        funkoExistente.setFechaLanzamiento(dto.getFechaLanzamiento());
+
+        // Al ser una transaccion JPA detecta que ya existe y lo actuliza en vez de crearlo
+        return  repository.save(funkoExistente);
     }
 
     @Override
     @CachePut(key = "#id")
-    public Funko patch(Long id, FunkoCreateDTO dto) {
+    @Transactional // Igual que crear para mantener el ciclo de vida de la entidad
+    public Funko patch(Long id, FunkoRequestDto dto) {
         // Validamos solo las reglas de negocio aplicables a los campos presentes
         validarNegocio(dto);
-        Funko cambios = new Funko(null, dto.getNombre(), dto.getPrecio(), dto.getCategoria(), dto.getFechaLanzamiento(), null, null);
-        return repository.patch(id, cambios).orElseThrow(() -> new FunkoNotFoundException(id));
+
+        //Primero buscamos el funko a actualizar
+        Funko funkoExistente = repository.findById(id).orElseThrow(() -> new FunkoNotFoundException(id));
+
+        //Comprobamos el campo uno a uno y aplicamos solo los que no son nulos, es decir los que cambian
+        if (dto.getNombre() != null) {
+            funkoExistente.setNombre(dto.getNombre());
+        }
+        if (dto.getPrecio() != null) {
+            funkoExistente.setPrecio(dto.getPrecio());
+        }
+        if (dto.getCategoria() != null) {
+            funkoExistente.setCategoria(dto.getCategoria());
+        }
+        if (dto.getFechaLanzamiento() != null) {
+            funkoExistente.setFechaLanzamiento(dto.getFechaLanzamiento());
+        }
+
+        //Devolvemos el funko actulizado
+        return  repository.save(funkoExistente);
     }
 
     @Override
     @CacheEvict(key = "#id")
     public void delete(Long id) {
-        repository.deleteById(id).orElseThrow(() -> new FunkoNotFoundException(id));
+        repository.deleteById(id);
     }
 
     // Reglas sencillas de negocio más allá de la validación de anotaciones
@@ -76,7 +110,7 @@ public class FunkoServiceImpl implements FunkoService {
     // - En POST/PUT ya usamos @Valid en el controlador, por lo que las anotaciones del DTO se aplican.
     // - En PATCH no usamos @Valid para permitir campos opcionales; por eso aquí replicamos
     //   las reglas clave sólo para los campos presentes en el DTO.
-    private void validarNegocio(FunkoCreateDTO dto) {
+    private void validarNegocio(FunkoRequestDto dto) {
         // Nombre: no puede ser cadena vacía ni superar 100 caracteres (si se envía)
         if (dto.getNombre() != null) {
             if (dto.getNombre().trim().isEmpty()) {

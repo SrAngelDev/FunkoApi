@@ -1,0 +1,10 @@
+services:
+  funko-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: funko-api
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./logs:/app/logs

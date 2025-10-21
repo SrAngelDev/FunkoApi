@@ -1,6 +1,7 @@
 package srangeldev.funkoapi.dto;
 
 import jakarta.validation.constraints.*;
+import lombok.Data;
 import srangeldev.funkoapi.models.enums.Categoria;
 
 import java.time.LocalDate;
@@ -9,7 +10,8 @@ import java.time.LocalDate;
  * DTO de entrada para crear/actualizar un Funko.
  * Incluye validaciones básicas con Jakarta Validation.
  */
-public class FunkoCreateDTO {
+@Data
+public class FunkoRequestDto {
 
     @NotBlank(message = "El nombre es obligatorio")
     @Size(max = 100, message = "El nombre no puede superar 100 caracteres")
@@ -26,24 +28,10 @@ public class FunkoCreateDTO {
     @PastOrPresent(message = "La fecha de lanzamiento no puede ser futura")
     private LocalDate fechaLanzamiento;
 
-    //public FunkoCreateDTO() {}
-
-    public FunkoCreateDTO(String nombre, Double precio, Categoria categoria, LocalDate fechaLanzamiento) {
+    public FunkoRequestDto(String nombre, Double precio, Categoria categoria, LocalDate fechaLanzamiento) {
         this.nombre = nombre;
         this.precio = precio;
         this.categoria = categoria;
         this.fechaLanzamiento = fechaLanzamiento;
     }
-
-    public String getNombre() { return nombre; }
-    public void setNombre(String nombre) { this.nombre = nombre; }
-
-    public Double getPrecio() { return precio; }
-    public void setPrecio(Double precio) { this.precio = precio; }
-
-    public Categoria getCategoria() { return categoria; }
-    public void setCategoria(Categoria categoria) { this.categoria = categoria; }
-
-    public LocalDate getFechaLanzamiento() { return fechaLanzamiento; }
-    public void setFechaLanzamiento(LocalDate fechaLanzamiento) { this.fechaLanzamiento = fechaLanzamiento; }
 }

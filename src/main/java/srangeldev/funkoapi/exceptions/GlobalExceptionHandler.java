@@ -38,4 +38,11 @@ public class GlobalExceptionHandler {
         log.info("MANEJADOR DE EXCEPCIONES: Convirtiendo FunkoNotFoundException en 404 Not Found");
         return Map.of("error", ex.getMessage());
     }
+
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    @ExceptionHandler(FunkoException.class)
+    public Map<String, String> handleBusinessExceptions(FunkoException ex) {
+        log.info("MANEJADOR DE EXCEPCIONES: Convirtiendo FunkoException en 400 Bad Request");
+        return Map.of("error", ex.getMessage());
+    }
 }
