@@ -1,8 +1,8 @@
-package srangeldev.funkoapi.mappers;
+package srangeldev.funkoapi.Funko.mappers;
 
 import org.springframework.stereotype.Component;
-import srangeldev.funkoapi.dto.FunkoResponseDto;
-import srangeldev.funkoapi.models.Funko;
+import srangeldev.funkoapi.Funko.dto.FunkoResponseDto;
+import srangeldev.funkoapi.Funko.models.Funko;
 
 /**
  * Mapper sencillo para convertir entre entidades del dominio y DTOs.

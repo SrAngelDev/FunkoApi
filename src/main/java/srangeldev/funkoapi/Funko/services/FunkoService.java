@@ -1,7 +1,7 @@
-package srangeldev.funkoapi.services;
+package srangeldev.funkoapi.Funko.services;
 
-import srangeldev.funkoapi.dto.FunkoRequestDto;
-import srangeldev.funkoapi.models.Funko;
+import srangeldev.funkoapi.Funko.dto.FunkoRequestDto;
+import srangeldev.funkoapi.Funko.models.Funko;
 
 import java.util.List;
 

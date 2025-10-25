@@ -1,12 +1,10 @@
-package srangeldev.funkoapi.repositories;
+package srangeldev.funkoapi.Funko.repositories;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
-import srangeldev.funkoapi.models.Funko;
-import srangeldev.funkoapi.models.enums.Categoria;
-
+import srangeldev.funkoapi.Categoria.models.Categoria;
+import srangeldev.funkoapi.Funko.models.Funko;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 /**

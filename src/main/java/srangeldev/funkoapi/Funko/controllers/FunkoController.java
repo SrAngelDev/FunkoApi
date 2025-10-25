@@ -1,15 +1,15 @@
-package srangeldev.funkoapi.controllers;
+package srangeldev.funkoapi.Funko.controllers;
 
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-import srangeldev.funkoapi.dto.FunkoRequestDto;
-import srangeldev.funkoapi.dto.FunkoResponseDto;
-import srangeldev.funkoapi.mappers.FunkoMapper;
-import srangeldev.funkoapi.models.Funko;
-import srangeldev.funkoapi.services.FunkoService;
+import srangeldev.funkoapi.Funko.dto.FunkoRequestDto;
+import srangeldev.funkoapi.Funko.dto.FunkoResponseDto;
+import srangeldev.funkoapi.Funko.mappers.FunkoMapper;
+import srangeldev.funkoapi.Funko.models.Funko;
+import srangeldev.funkoapi.Funko.services.FunkoService;
 
 import java.net.URI;
 import java.util.List;

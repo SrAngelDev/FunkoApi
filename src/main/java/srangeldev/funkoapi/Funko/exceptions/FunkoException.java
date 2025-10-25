@@ -1,4 +1,4 @@
-package srangeldev.funkoapi.exceptions;
+package srangeldev.funkoapi.Funko.exceptions;
 
 /**
  * Excepción base para errores relacionados con Funkos.

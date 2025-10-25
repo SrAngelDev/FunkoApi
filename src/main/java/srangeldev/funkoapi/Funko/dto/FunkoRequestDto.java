@@ -1,8 +1,8 @@
-package srangeldev.funkoapi.dto;
+package srangeldev.funkoapi.Funko.dto;
 
 import jakarta.validation.constraints.*;
 import lombok.Data;
-import srangeldev.funkoapi.models.enums.Categoria;
+import srangeldev.funkoapi.Funko.models.enums.Categoria;
 
 import java.time.LocalDate;
 

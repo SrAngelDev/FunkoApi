@@ -1,4 +1,4 @@
-package srangeldev.funkoapi.exceptions;
+package srangeldev.funkoapi.Funko.exceptions;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.FieldError;

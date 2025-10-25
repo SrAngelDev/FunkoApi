@@ -1,19 +1,20 @@
-package srangeldev.funkoapi.services;
+package srangeldev.funkoapi.Funko.services;
 
 import jakarta.transaction.Transactional;
-import lombok.val;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
-import srangeldev.funkoapi.dto.FunkoRequestDto;
-import srangeldev.funkoapi.exceptions.FunkoNotFoundException;
-import srangeldev.funkoapi.models.Funko;
-import srangeldev.funkoapi.repositories.FunkoRepository;
+import srangeldev.funkoapi.Funko.exceptions.FunkoException;
+import srangeldev.funkoapi.Funko.dto.FunkoRequestDto;
+import srangeldev.funkoapi.Funko.exceptions.FunkoNotFoundException;
+import srangeldev.funkoapi.Funko.models.Funko;
+import srangeldev.funkoapi.Funko.repositories.FunkoRepository;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -36,7 +37,7 @@ public class FunkoServiceImpl implements FunkoService {
     public Funko create(FunkoRequestDto dto) {
         // Validación simple extra (además de la de anotaciones)
         validarNegocio(dto);
-        Funko funko = new Funko(null, dto.getNombre(), dto.getPrecio(), dto.getCategoria(), dto.getFechaLanzamiento(), null, null);
+        Funko funko = new Funko(null, dto.getNombre(), dto.getPrecio(), dto.getCategoria(), dto.getFechaLanzamiento(), LocalDateTime.now(), LocalDateTime.now());
         return repository.save(funko);
     }
 
@@ -114,21 +115,21 @@ public class FunkoServiceImpl implements FunkoService {
         // Nombre: no puede ser cadena vacía ni superar 100 caracteres (si se envía)
         if (dto.getNombre() != null) {
             if (dto.getNombre().trim().isEmpty()) {
-                throw new srangeldev.funkoapi.exceptions.FunkoException("El nombre no puede estar vacío");
+                throw new FunkoException("El nombre no puede estar vacío");
             }
             if (dto.getNombre().length() > 100) {
-                throw new srangeldev.funkoapi.exceptions.FunkoException("El nombre no puede superar 100 caracteres");
+                throw new FunkoException("El nombre no puede superar 100 caracteres");
             }
         }
 
         // Precio: debe ser > 0 (si se envía)
         if (dto.getPrecio() != null && dto.getPrecio() <= 0) {
-            throw new srangeldev.funkoapi.exceptions.FunkoException("El precio debe ser mayor que 0");
+            throw new FunkoException("El precio debe ser mayor que 0");
         }
 
         // Fecha de lanzamiento: no puede ser futura (si se envía)
         if (dto.getFechaLanzamiento() != null && dto.getFechaLanzamiento().isAfter(LocalDate.now())) {
-            throw new srangeldev.funkoapi.exceptions.FunkoException("La fecha de lanzamiento no puede ser futura");
+            throw new FunkoException("La fecha de lanzamiento no puede ser futura");
         }
     }
 }

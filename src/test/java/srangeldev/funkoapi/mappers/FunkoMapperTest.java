@@ -2,9 +2,10 @@ package srangeldev.funkoapi.mappers;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import srangeldev.funkoapi.dto.FunkoResponseDto;
-import srangeldev.funkoapi.models.Funko;
-import srangeldev.funkoapi.models.enums.Categoria;
+import srangeldev.funkoapi.Funko.dto.FunkoResponseDto;
+import srangeldev.funkoapi.Funko.mappers.FunkoMapper;
+import srangeldev.funkoapi.Funko.models.Funko;
+import srangeldev.funkoapi.Funko.models.enums.Categoria;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;

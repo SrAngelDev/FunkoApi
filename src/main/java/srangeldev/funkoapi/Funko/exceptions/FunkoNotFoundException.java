@@ -1,4 +1,4 @@
-package srangeldev.funkoapi.exceptions;
+package srangeldev.funkoapi.Funko.exceptions;
 
 /**
  * Excepción específica para indicar que un Funko no existe.
