@@ -1,6 +1,5 @@
 package srangeldev.funkoapi.Funko.models;
 
-import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -32,17 +31,17 @@ public class Funko {
     private UUID uuid = UUID.randomUUID();
 
     @Column(nullable=false)
-    private String name;
+    private String nombre;
 
     @Column(nullable=false)
-    private Double price;
+    private Double precio;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "category_id", nullable = false)
-    private Categoria category;
+    @JoinColumn(name = "categoria_id", nullable = false)
+    private Categoria categoria;
 
-    @Column(nullable=false, name = "release_date")
-    private LocalDate releaseDate;
+    @Column(nullable=false, name = "fecha_lanzamiento")
+    private LocalDate fechaLanzamiento;
 
     @CreatedDate
     @Column(nullable=false, name = "created_at")

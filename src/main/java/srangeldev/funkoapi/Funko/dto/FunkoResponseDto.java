@@ -1,32 +1,22 @@
 package srangeldev.funkoapi.Funko.dto;
 
+import lombok.Builder;
 import lombok.Data;
-import srangeldev.funkoapi.Funko.models.enums.Categoria;
+import srangeldev.funkoapi.Categoria.dto.CategoriaResponseDto;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
-/**
- * DTO de salida para devolver información del Funko al cliente.
- */
 @Data
+@Builder // Usamos Builder para facilitar la construcción en el mapper
 public class FunkoResponseDto {
     private Long id;
+    private UUID uuid;
     private String nombre;
     private Double precio;
-    private Categoria categoria;
+    private CategoriaResponseDto categoriaResponseDto;
     private LocalDate fechaLanzamiento;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
-
-    public FunkoResponseDto(Long id, String nombre, Double precio, Categoria categoria, LocalDate fechaLanzamiento,
-                            LocalDateTime createdAt, LocalDateTime updatedAt) {
-        this.id = id;
-        this.nombre = nombre;
-        this.precio = precio;
-        this.categoria = categoria;
-        this.fechaLanzamiento = fechaLanzamiento;
-        this.createdAt = createdAt;
-        this.updatedAt = updatedAt;
-    }
 }

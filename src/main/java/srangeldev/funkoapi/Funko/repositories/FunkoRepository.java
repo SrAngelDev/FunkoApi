@@ -20,4 +20,7 @@ public interface FunkoRepository extends JpaRepository<Funko, Long> {
     List<Funko> findByCategoria(Categoria categoria);
 
     List<Funko> findByUuid(UUID uuid);
+
+    // Comprobar si la categoria existe o no
+    boolean existsByCategoria_Id(Long categoriaId);
 }

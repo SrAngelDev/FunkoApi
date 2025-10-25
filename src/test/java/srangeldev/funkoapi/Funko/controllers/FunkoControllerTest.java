@@ -17,7 +17,7 @@ import srangeldev.funkoapi.Funko.dto.FunkoRequestDto;
 import srangeldev.funkoapi.Funko.dto.FunkoResponseDto;
 import srangeldev.funkoapi.Funko.exceptions.FunkoException;
 import srangeldev.funkoapi.Funko.exceptions.FunkoNotFoundException;
-import srangeldev.funkoapi.Funko.exceptions.GlobalExceptionHandler;
+import srangeldev.funkoapi.expections.GlobalExceptionHandler;
 import srangeldev.funkoapi.Funko.mappers.FunkoMapper;
 import srangeldev.funkoapi.Funko.models.Funko;
 import srangeldev.funkoapi.Funko.models.enums.Categoria;

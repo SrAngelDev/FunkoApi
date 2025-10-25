@@ -21,7 +21,7 @@ import java.util.stream.Collectors;
  * Sólo orquesta las peticiones/respuestas y delega la lógica en el servicio.
  */
 @RestController
-@RequestMapping("/funkos")
+@RequestMapping("/api/funkos") // <-- ÚNICO CAMBIO SUGERIDO (para consistencia)
 @Validated
 public class FunkoController {
 
@@ -34,9 +34,9 @@ public class FunkoController {
     }
 
     // Obtener todos los Funkos
-    @GetMapping
-    @RequestMapping({"/", ""})
+    @GetMapping({"/", ""}) // Esta ruta ahora será /api/funkos/
     public ResponseEntity<List<FunkoResponseDto>> getAll() {
+        // El servicio devuelve List<Funko>, el mapper convierte a List<FunkoResponseDto>
         List<FunkoResponseDto> lista = funkoService.getAll().stream()
                 .map(mapper::toResponse)
                 .collect(Collectors.toList());
@@ -44,18 +44,20 @@ public class FunkoController {
     }
 
     // Obtener un Funko por ID
-    @GetMapping("/{id}")
+    @GetMapping("/{id}") // Esta ruta ahora será /api/funkos/1
     public ResponseEntity<FunkoResponseDto> getById(@PathVariable Long id) {
+        // El servicio devuelve Funko, el mapper convierte a FunkoResponseDto
         Funko funko = funkoService.getById(id);
         return ResponseEntity.ok(mapper.toResponse(funko));
     }
 
     // Crear un nuevo Funko
-    @PostMapping
+    @PostMapping({"/", ""})
     public ResponseEntity<FunkoResponseDto> create(@Valid @RequestBody FunkoRequestDto dto) {
+        // El servicio lo procesa y devuelve la entidad Funko
         Funko creado = funkoService.create(dto);
+        // El mapper convierte la entidad al DTO de respuesta
         FunkoResponseDto resp = mapper.toResponse(creado);
-        // Devolvemos 201 Created con Location del recurso
         return ResponseEntity.created(URI.create("/api/funkos/" + resp.getId())).body(resp);
     }
 
@@ -69,7 +71,6 @@ public class FunkoController {
     // Actualización parcial (PATCH)
     @PatchMapping("/{id}")
     public ResponseEntity<FunkoResponseDto> patch(@PathVariable Long id, @RequestBody FunkoRequestDto dto) {
-        // Sin @Valid para permitir campos opcionales en PATCH
         Funko actualizado = funkoService.patch(id, dto);
         return ResponseEntity.ok(mapper.toResponse(actualizado));
     }

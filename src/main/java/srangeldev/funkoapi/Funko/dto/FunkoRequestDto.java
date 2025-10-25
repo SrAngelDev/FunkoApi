@@ -1,37 +1,33 @@
 package srangeldev.funkoapi.Funko.dto;
 
 import jakarta.validation.constraints.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
-import srangeldev.funkoapi.Funko.models.enums.Categoria;
+import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
 
 /**
  * DTO de entrada para crear/actualizar un Funko.
- * Incluye validaciones básicas con Jakarta Validation.
+ * Adaptado para usar campos en inglés y recibir solo el ID de la categoría.
  */
 @Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class FunkoRequestDto {
-
     @NotBlank(message = "El nombre es obligatorio")
-    @Size(max = 100, message = "El nombre no puede superar 100 caracteres")
     private String nombre;
 
     @NotNull(message = "El precio es obligatorio")
-    @Positive(message = "El precio debe ser mayor que 0")
+    @Positive
     private Double precio;
 
-    @NotNull(message = "La categoría es obligatoria")
-    private Categoria categoria;
+    @NotNull(message = "El ID de la categoría es obligatorio")
+    private Long categoriaId;
 
     @NotNull(message = "La fecha de lanzamiento es obligatoria")
-    @PastOrPresent(message = "La fecha de lanzamiento no puede ser futura")
+    @PastOrPresent
     private LocalDate fechaLanzamiento;
-
-    public FunkoRequestDto(String nombre, Double precio, Categoria categoria, LocalDate fechaLanzamiento) {
-        this.nombre = nombre;
-        this.precio = precio;
-        this.categoria = categoria;
-        this.fechaLanzamiento = fechaLanzamiento;
-    }
 }

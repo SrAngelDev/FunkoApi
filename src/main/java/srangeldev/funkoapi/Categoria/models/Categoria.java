@@ -21,7 +21,7 @@ public class Categoria {
     private Long id;
 
     @Column(nullable=false)
-    private String name;
+    private String nombre;
 
     @CreatedDate
     @Column(nullable=false, name = "created_at")
