@@ -41,7 +41,7 @@ public class FunkoMapper {
                 .nombre(funko.getNombre())
                 .precio(funko.getPrecio())
                 .fechaLanzamiento(funko.getFechaLanzamiento())
-                .categoriaResponseDto(categoriaDto)
+                .categoria(categoriaDto)
                 .createdAt(funko.getCreatedAt())
                 .updatedAt(funko.getUpdatedAt())
                 .build();

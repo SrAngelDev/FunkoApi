@@ -1,47 +1,66 @@
-package srangeldev.funkoapi.services;
+package srangeldev.funkoapi.Funko.services;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import srangeldev.funkoapi.Categoria.models.Categoria;
+import srangeldev.funkoapi.Categoria.repositories.CategoriaRepository;
 import srangeldev.funkoapi.Funko.dto.FunkoRequestDto;
 import srangeldev.funkoapi.Funko.exceptions.FunkoException;
 import srangeldev.funkoapi.Funko.exceptions.FunkoNotFoundException;
 import srangeldev.funkoapi.Funko.models.Funko;
-import srangeldev.funkoapi.Funko.models.enums.Categoria;
 import srangeldev.funkoapi.Funko.repositories.FunkoRepository;
-import srangeldev.funkoapi.Funko.services.FunkoServiceImpl;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class FunkoServiceImplTest {
 
     @Mock
-    private FunkoRepository repository;
+    private FunkoRepository funkoRepository;
+
+    @Mock
+    private CategoriaRepository categoriaRepository;
 
     @InjectMocks
-    private FunkoServiceImpl service;
+    private FunkoServiceImpl funkoService;
 
-    // Datos de prueba reutilizables
+    // --- Datos de prueba reutilizables ---
+    private final Categoria categoria1 = new Categoria(
+            1L,
+            "SERIES",
+            LocalDateTime.now(),
+            LocalDateTime.now()
+    );
+
+    private final Categoria categoria2 = new Categoria(
+            2L,
+            "PELICULAS",
+            LocalDateTime.now(),
+            LocalDateTime.now()
+    );
+
     private final Funko funko1 = new Funko(
             1L,
+            UUID.randomUUID(),
             "Funko Test 1",
             19.99,
-            Categoria.SERIES,
+            categoria1,
             LocalDate.of(2021, 1, 1),
             LocalDateTime.now(),
             LocalDateTime.now()
@@ -49,9 +68,10 @@ class FunkoServiceImplTest {
 
     private final Funko funko2 = new Funko(
             2L,
+            UUID.randomUUID(),
             "Funko Test 2",
             24.99,
-            Categoria.VIDEOJUEGOS,
+            categoria2,
             LocalDate.of(2022, 2, 2),
             LocalDateTime.now(),
             LocalDateTime.now()
@@ -60,114 +80,166 @@ class FunkoServiceImplTest {
     private final FunkoRequestDto validDTO = new FunkoRequestDto(
             "Nuevo Funko",
             29.99,
-            Categoria.PELICULAS,
+            1L, // Corresponde a categoria1
             LocalDate.of(2020, 3, 3)
     );
+    // --- Fin de datos de prueba ---
+
 
     @Nested
     @DisplayName("Tests para casos correctos")
     class SuccessCases {
 
         @Test
-        @DisplayName("Constructor inicializa correctamente")
-        void constructor() {
-            // Arrange & Act
-            FunkoServiceImpl testService = new FunkoServiceImpl(repository);
-
-            // Assert - Si no hay NullPointerException, el constructor funciona correctamente
-            assertNotNull(testService);
-        }
-
-        @Test
         @DisplayName("create() guarda un funko válido")
         void createValidFunko() {
             // Arrange
-            when(repository.save(any(Funko.class))).thenReturn(funko1);
+            // 1. Simular la búsqueda de categoría
+            when(categoriaRepository.findById(1L)).thenReturn(Optional.of(categoria1));
+            // 2. Simular el guardado del funko
+            // Usamos ArgumentCaptor para capturar el Funko que se pasa a save()
+            ArgumentCaptor<Funko> funkoCaptor = ArgumentCaptor.forClass(Funko.class);
+            // Creamos una respuesta simulada
+            Funko savedFunko = new Funko(1L, UUID.randomUUID(), validDTO.getNombre(), validDTO.getPrecio(), categoria1, validDTO.getFechaLanzamiento(), LocalDateTime.now(), LocalDateTime.now());
+            when(funkoRepository.save(funkoCaptor.capture())).thenReturn(savedFunko);
+
 
             // Act
-            Funko result = service.create(validDTO);
+            Funko result = funkoService.create(validDTO);
 
             // Assert
             assertNotNull(result);
-            assertEquals(1L, result.getId());
-            assertEquals("Funko Test 1", result.getNombre());
-            verify(repository).save(any(Funko.class));
+            assertEquals(validDTO.getNombre(), result.getNombre());
+            assertEquals(categoria1.getNombre(), result.getCategoria().getNombre());
+            // Verificamos que los datos capturados son los esperados
+            assertEquals(validDTO.getNombre(), funkoCaptor.getValue().getNombre());
+            assertEquals(categoria1, funkoCaptor.getValue().getCategoria());
+
+            verify(categoriaRepository).findById(1L);
+            verify(funkoRepository).save(any(Funko.class));
         }
 
         @Test
         @DisplayName("getById() devuelve un funko existente")
         void getByIdExisting() {
             // Arrange
-            when(repository.getById(1L)).thenReturn(Optional.of(funko1));
+            when(funkoRepository.findById(1L)).thenReturn(Optional.of(funko1));
 
             // Act
-            Funko result = service.getById(1L);
+            Funko result = funkoService.getById(1L);
 
             // Assert
             assertNotNull(result);
             assertEquals(1L, result.getId());
             assertEquals("Funko Test 1", result.getNombre());
-            verify(repository).getById(1L);
+            verify(funkoRepository).findById(1L);
         }
 
         @Test
         @DisplayName("getAll() devuelve lista de funkos")
         void getAllFunkos() {
             // Arrange
-            when(repository.getAll()).thenReturn(Arrays.asList(funko1, funko2));
+            when(funkoRepository.findAll()).thenReturn(Arrays.asList(funko1, funko2));
 
             // Act
-            List<Funko> result = service.getAll();
+            List<Funko> result = funkoService.getAll();
 
             // Assert
             assertEquals(2, result.size());
             assertEquals(1L, result.get(0).getId());
             assertEquals(2L, result.get(1).getId());
-            verify(repository).getAll();
+            verify(funkoRepository).findAll();
         }
 
         @Test
         @DisplayName("update() actualiza un funko existente")
         void updateExistingFunko() {
             // Arrange
-            when(repository.update(eq(1L), any(Funko.class))).thenReturn(Optional.of(funko1));
+            FunkoRequestDto updateDTO = new FunkoRequestDto("Funko Actualizado", 30.0, 2L, LocalDate.of(2022, 2, 2));
+            when(funkoRepository.findById(1L)).thenReturn(Optional.of(funko1)); // Devuelve el funko original
+            when(categoriaRepository.findById(2L)).thenReturn(Optional.of(categoria2)); // Devuelve la nueva categoría
+            when(funkoRepository.save(any(Funko.class))).thenAnswer(invocation -> invocation.getArgument(0)); // Devuelve el mismo objeto que se le pasa
 
             // Act
-            Funko result = service.update(1L, validDTO);
+            Funko result = funkoService.update(1L, updateDTO);
 
             // Assert
             assertNotNull(result);
-            assertEquals(1L, result.getId());
-            verify(repository).update(eq(1L), any(Funko.class));
+            assertEquals(1L, result.getId()); // El ID no cambia
+            assertEquals("Funko Actualizado", result.getNombre()); // El nombre se actualiza
+            assertEquals(categoria2.getNombre(), result.getCategoria().getNombre()); // La categoría se actualiza
+
+            verify(funkoRepository).findById(1L);
+            verify(categoriaRepository).findById(2L);
+            verify(funkoRepository).save(any(Funko.class));
         }
 
         @Test
-        @DisplayName("patch() actualiza parcialmente un funko existente")
-        void patchExistingFunko() {
+        @DisplayName("patch() actualiza parcialmente un funko existente (solo nombre)")
+        void patchExistingFunko_OnlyName() {
             // Arrange
-            when(repository.patch(eq(1L), any(Funko.class))).thenReturn(Optional.of(funko1));
-            FunkoRequestDto patchDTO = new FunkoRequestDto(null, 15.99, null, null);
+            FunkoRequestDto patchDTO = new FunkoRequestDto("Nombre Parcial", null, null, null);
+            // Hacemos una copia para evitar modificar el original
+            Funko funkoOriginal = new Funko(1L, funko1.getUuid(), funko1.getNombre(), funko1.getPrecio(), funko1.getCategoria(), funko1.getFechaLanzamiento(), funko1.getCreatedAt(), funko1.getUpdatedAt());
+
+            when(funkoRepository.findById(1L)).thenReturn(Optional.of(funkoOriginal));
+            when(funkoRepository.save(any(Funko.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
             // Act
-            Funko result = service.patch(1L, patchDTO);
+            Funko result = funkoService.patch(1L, patchDTO);
 
             // Assert
             assertNotNull(result);
             assertEquals(1L, result.getId());
-            verify(repository).patch(eq(1L), any(Funko.class));
+            assertEquals("Nombre Parcial", result.getNombre()); // Nombre actualizado
+            assertEquals(funko1.getPrecio(), result.getPrecio()); // Precio NO actualizado
+            assertEquals(funko1.getCategoria(), result.getCategoria()); // Categoría NO actualizada
+
+            verify(funkoRepository).findById(1L);
+            verify(funkoRepository).save(any(Funko.class));
+            verify(categoriaRepository, never()).findById(anyLong()); // No se debe llamar a CategoriaRepository
         }
+
+        @Test
+        @DisplayName("patch() actualiza parcialmente un funko existente (solo categoria)")
+        void patchExistingFunko_OnlyCategory() {
+            // Arrange
+            FunkoRequestDto patchDTO = new FunkoRequestDto(null, null, 2L, null);
+            Funko funkoOriginal = new Funko(1L, funko1.getUuid(), funko1.getNombre(), funko1.getPrecio(), funko1.getCategoria(), funko1.getFechaLanzamiento(), funko1.getCreatedAt(), funko1.getUpdatedAt());
+
+            when(funkoRepository.findById(1L)).thenReturn(Optional.of(funkoOriginal));
+            when(categoriaRepository.findById(2L)).thenReturn(Optional.of(categoria2)); // Simula la nueva categoría
+            when(funkoRepository.save(any(Funko.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+            // Act
+            Funko result = funkoService.patch(1L, patchDTO);
+
+            // Assert
+            assertNotNull(result);
+            assertEquals(1L, result.getId());
+            assertEquals(funko1.getNombre(), result.getNombre()); // Nombre NO actualizado
+            assertEquals(categoria2.getNombre(), result.getCategoria().getNombre()); // Categoría actualizada
+
+            verify(funkoRepository).findById(1L);
+            verify(categoriaRepository).findById(2L); // Se debe llamar a CategoriaRepository
+            verify(funkoRepository).save(any(Funko.class));
+        }
+
 
         @Test
         @DisplayName("delete() elimina un funko existente")
         void deleteExistingFunko() {
             // Arrange
-            when(repository.deleteById(1L)).thenReturn(Optional.of(funko1));
+            when(funkoRepository.existsById(1L)).thenReturn(true);
+            // No mockeamos deleteById porque devuelve void, pero podemos usar doNothing()
+            doNothing().when(funkoRepository).deleteById(1L);
 
             // Act
-            service.delete(1L);
+            funkoService.delete(1L);
 
             // Assert
-            verify(repository).deleteById(1L);
+            verify(funkoRepository).existsById(1L);
+            verify(funkoRepository).deleteById(1L);
         }
     }
 
@@ -176,91 +248,86 @@ class FunkoServiceImplTest {
     class ErrorCases {
 
         @Nested
-        @DisplayName("Tests para errores de ID inexistente")
+        @DisplayName("Tests para errores de ID inexistente (FunkoNotFoundException)")
         class NotFoundTests {
             @Test
             @DisplayName("getById() lanza excepción si el funko no existe")
             void getByIdNonExisting() {
                 // Arrange
-                when(repository.getById(99L)).thenReturn(Optional.empty());
+                when(funkoRepository.findById(99L)).thenReturn(Optional.empty());
 
                 // Act & Assert
                 FunkoNotFoundException exception = assertThrows(
                         FunkoNotFoundException.class,
-                        () -> service.getById(99L)
+                        () -> funkoService.getById(99L)
                 );
                 assertEquals("Funko con id 99 no encontrado", exception.getMessage());
-                verify(repository).getById(99L);
+                verify(funkoRepository).findById(99L);
             }
 
             @Test
             @DisplayName("update() lanza excepción si el funko no existe")
             void updateNonExisting() {
                 // Arrange
-                when(repository.update(eq(99L), any(Funko.class))).thenReturn(Optional.empty());
+                when(funkoRepository.findById(99L)).thenReturn(Optional.empty());
 
                 // Act & Assert
                 FunkoNotFoundException exception = assertThrows(
                         FunkoNotFoundException.class,
-                        () -> service.update(99L, validDTO)
+                        () -> funkoService.update(99L, validDTO)
                 );
                 assertEquals("Funko con id 99 no encontrado", exception.getMessage());
-                verify(repository).update(eq(99L), any(Funko.class));
+                verify(funkoRepository).findById(99L);
+                verify(funkoRepository, never()).save(any()); // No se debe llamar a save
             }
 
             @Test
             @DisplayName("patch() lanza excepción si el funko no existe")
             void patchNonExisting() {
                 // Arrange
-                when(repository.patch(eq(99L), any(Funko.class))).thenReturn(Optional.empty());
                 FunkoRequestDto patchDTO = new FunkoRequestDto(null, 15.99, null, null);
+                when(funkoRepository.findById(99L)).thenReturn(Optional.empty());
 
                 // Act & Assert
                 FunkoNotFoundException exception = assertThrows(
                         FunkoNotFoundException.class,
-                        () -> service.patch(99L, patchDTO)
+                        () -> funkoService.patch(99L, patchDTO)
                 );
                 assertEquals("Funko con id 99 no encontrado", exception.getMessage());
-                verify(repository).patch(eq(99L), any(Funko.class));
+                verify(funkoRepository).findById(99L);
+                verify(funkoRepository, never()).save(any());
             }
 
             @Test
             @DisplayName("delete() lanza excepción si el funko no existe")
             void deleteNonExisting() {
                 // Arrange
-                when(repository.deleteById(99L)).thenReturn(Optional.empty());
+                when(funkoRepository.existsById(99L)).thenReturn(false);
 
                 // Act & Assert
                 FunkoNotFoundException exception = assertThrows(
                         FunkoNotFoundException.class,
-                        () -> service.delete(99L)
+                        () -> funkoService.delete(99L)
                 );
                 assertEquals("Funko con id 99 no encontrado", exception.getMessage());
-                verify(repository).deleteById(99L);
+                verify(funkoRepository).existsById(99L);
+                verify(funkoRepository, never()).deleteById(anyLong()); // No se debe llamar a delete
             }
         }
 
         @Nested
-        @DisplayName("Tests para validaciones de negocio")
+        @DisplayName("Tests para validaciones de negocio (FunkoException)")
         class BusinessValidationTests {
             @Test
             @DisplayName("create() valida que el nombre no esté vacío")
             void createWithEmptyName() {
                 // Arrange
-                FunkoRequestDto invalidDTO = new FunkoRequestDto(
-                        "   ", // Nombre vacío después de trim
-                        29.99,
-                        Categoria.PELICULAS,
-                        LocalDate.of(2020, 3, 3)
-                );
+                FunkoRequestDto invalidDTO = new FunkoRequestDto("   ", 29.99, 1L, LocalDate.of(2020, 3, 3));
 
                 // Act & Assert
-                FunkoException exception = assertThrows(
-                        FunkoException.class,
-                        () -> service.create(invalidDTO)
-                );
+                FunkoException exception = assertThrows(FunkoException.class, () -> funkoService.create(invalidDTO));
                 assertEquals("El nombre no puede estar vacío", exception.getMessage());
-                verify(repository, never()).save(any());
+                verify(funkoRepository, never()).save(any());
             }
 
             @Test
@@ -268,189 +335,125 @@ class FunkoServiceImplTest {
             void createWithTooLongName() {
                 // Arrange
                 String longName = "a".repeat(101); // 101 caracteres
-                FunkoRequestDto invalidDTO = new FunkoRequestDto(
-                        longName,
-                        29.99,
-                        Categoria.PELICULAS,
-                        LocalDate.of(2020, 3, 3)
-                );
+                FunkoRequestDto invalidDTO = new FunkoRequestDto(longName, 29.99, 1L, LocalDate.of(2020, 3, 3));
 
                 // Act & Assert
-                FunkoException exception = assertThrows(
-                        FunkoException.class,
-                        () -> service.create(invalidDTO)
-                );
+                FunkoException exception = assertThrows(FunkoException.class, () -> funkoService.create(invalidDTO));
                 assertEquals("El nombre no puede superar 100 caracteres", exception.getMessage());
-                verify(repository, never()).save(any());
+                verify(funkoRepository, never()).save(any());
             }
 
             @Test
-            @DisplayName("create() valida que el precio sea positivo")
-            void createWithNegativePrice() {
-                // Arrange
-                FunkoRequestDto invalidDTO = new FunkoRequestDto(
-                        "Funko Test",
-                        -5.0, // Precio negativo
-                        Categoria.PELICULAS,
-                        LocalDate.of(2020, 3, 3)
-                );
-
-                // Act & Assert
-                FunkoException exception = assertThrows(
-                        FunkoException.class,
-                        () -> service.create(invalidDTO)
-                );
-                assertEquals("El precio debe ser mayor que 0", exception.getMessage());
-                verify(repository, never()).save(any());
-            }
-
-            @Test
-            @DisplayName("create() valida que el precio no sea cero")
+            @DisplayName("create() valida que el precio sea positivo (no cero)")
             void createWithZeroPrice() {
                 // Arrange
-                FunkoRequestDto invalidDTO = new FunkoRequestDto(
-                        "Funko Test",
-                        0.0, // Precio cero
-                        Categoria.PELICULAS,
-                        LocalDate.of(2020, 3, 3)
-                );
+                FunkoRequestDto invalidDTO = new FunkoRequestDto("Funko Test", 0.0, 1L, LocalDate.of(2020, 3, 3));
 
                 // Act & Assert
-                FunkoException exception = assertThrows(
-                        FunkoException.class,
-                        () -> service.create(invalidDTO)
-                );
+                FunkoException exception = assertThrows(FunkoException.class, () -> funkoService.create(invalidDTO));
                 assertEquals("El precio debe ser mayor que 0", exception.getMessage());
-                verify(repository, never()).save(any());
+                verify(funkoRepository, never()).save(any());
             }
 
             @Test
             @DisplayName("create() valida que la fecha no sea futura")
             void createWithFutureDate() {
                 // Arrange
-                FunkoRequestDto invalidDTO = new FunkoRequestDto(
-                        "Funko Test",
-                        29.99,
-                        Categoria.PELICULAS,
-                        LocalDate.now().plusDays(1) // Fecha futura
-                );
+                FunkoRequestDto invalidDTO = new FunkoRequestDto("Funko Test", 29.99, 1L, LocalDate.now().plusDays(1));
 
                 // Act & Assert
-                FunkoException exception = assertThrows(
-                        FunkoException.class,
-                        () -> service.create(invalidDTO)
-                );
+                FunkoException exception = assertThrows(FunkoException.class, () -> funkoService.create(invalidDTO));
                 assertEquals("La fecha de lanzamiento no puede ser futura", exception.getMessage());
-                verify(repository, never()).save(any());
+                verify(funkoRepository, never()).save(any());
             }
 
             @Test
-            @DisplayName("update() realiza las mismas validaciones que create()")
+            @DisplayName("update() realiza las mismas validaciones (precio negativo)")
             void updateWithInvalidData() {
                 // Arrange
-                FunkoRequestDto invalidDTO = new FunkoRequestDto(
-                        "", // Nombre vacío
-                        29.99,
-                        Categoria.PELICULAS,
-                        LocalDate.of(2020, 3, 3)
-                );
+                FunkoRequestDto invalidDTO = new FunkoRequestDto("Funko Malo", -5.0, 1L, LocalDate.of(2020, 3, 3));
 
                 // Act & Assert
-                FunkoException exception = assertThrows(
-                        FunkoException.class,
-                        () -> service.update(1L, invalidDTO)
-                );
-                assertEquals("El nombre no puede estar vacío", exception.getMessage());
-                verify(repository, never()).update(anyLong(), any());
-            }
-
-            @Test
-            @DisplayName("patch() realiza validaciones solo en campos no nulos")
-            void patchWithInvalidData() {
-                // Arrange - Solo precio inválido
-                FunkoRequestDto invalidDTO = new FunkoRequestDto(
-                        null, // No se actualiza nombre
-                        -10.0, // Precio negativo (inválido)
-                        null, // No se actualiza categoría
-                        null  // No se actualiza fecha
-                );
-
-                // Act & Assert
-                FunkoException exception = assertThrows(
-                        FunkoException.class,
-                        () -> service.patch(1L, invalidDTO)
-                );
+                FunkoException exception = assertThrows(FunkoException.class, () -> funkoService.update(1L, invalidDTO));
                 assertEquals("El precio debe ser mayor que 0", exception.getMessage());
-                verify(repository, never()).patch(anyLong(), any());
+                verify(funkoRepository, never()).save(any());
             }
 
             @Test
-            @DisplayName("patch() permite actualizar solo campos específicos")
-            void patchWithValidPartialData() {
+            @DisplayName("patch() realiza validaciones solo en campos no nulos (nombre vacío)")
+            void patchWithInvalidData() {
                 // Arrange
-                FunkoRequestDto validPartialDTO = new FunkoRequestDto(
-                        "Nuevo Nombre", // Válido
-                        null, // No se actualiza precio
-                        null, // No se actualiza categoría
-                        null  // No se actualiza fecha
-                );
+                FunkoRequestDto invalidDTO = new FunkoRequestDto(" ", null, null, null);
 
-                when(repository.patch(eq(1L), any(Funko.class))).thenReturn(Optional.of(funko1));
-
-                // Act
-                Funko result = service.patch(1L, validPartialDTO);
-
-                // Assert
-                assertNotNull(result);
-                verify(repository).patch(eq(1L), any(Funko.class));
-            }
-
-            @Test
-            @DisplayName("patch() con DTO completamente nulo no causa error")
-            void patchWithAllNullFields() {
-                // Arrange
-                FunkoRequestDto allNullDTO = new FunkoRequestDto(
-                        null, null, null, null
-                );
-
-                when(repository.patch(eq(1L), any(Funko.class))).thenReturn(Optional.of(funko1));
-
-                // Act
-                Funko result = service.patch(1L, allNullDTO);
-
-                // Assert
-                assertNotNull(result);
-                verify(repository).patch(eq(1L), any(Funko.class));
+                // Act & Assert
+                FunkoException exception = assertThrows(FunkoException.class, () -> funkoService.patch(1L, invalidDTO));
+                assertEquals("El nombre no puede estar vacío", exception.getMessage());
+                verify(funkoRepository, never()).save(any());
             }
         }
-    }
 
-    @Nested
-    @DisplayName("Tests para caché")
-    class CacheTests {
-        @Test
-        @DisplayName("getById() utiliza caché en llamadas repetidas")
-        void getByIdUsesCacheForRepeatedCalls() {
-            // Este test verifica que la anotación @Cacheable funciona
-            // En un entorno de pruebas unitarias normal, la caché no está activada,
-            // pero podemos verificar que las anotaciones están presentes
+        @Nested
+        @DisplayName("Tests para errores de Categoría (FunkoException)")
+        class CategoriaErrorTests {
 
-            // Arrange
-            when(repository.getById(1L)).thenReturn(Optional.of(funko1));
+            @Test
+            @DisplayName("create() lanza excepción si Categoria no existe")
+            void createWithNonExistingCategoria() {
+                // Arrange
+                FunkoRequestDto dto = new FunkoRequestDto("Nuevo Funko", 29.99, 99L, LocalDate.of(2020, 3, 3));
+                when(categoriaRepository.findById(99L)).thenReturn(Optional.empty()); // Categoria no encontrada
 
-            // Act - Primera llamada
-            service.getById(1L);
+                // Act & Assert
+                FunkoException exception = assertThrows(FunkoException.class, () -> funkoService.create(dto));
+                assertEquals("Categoría no encontrada con ID: 99", exception.getMessage());
+                verify(categoriaRepository).findById(99L);
+                verify(funkoRepository, never()).save(any());
+            }
 
-            // Act - Segunda llamada (debería usar caché en entorno real)
-            service.getById(1L);
+            @Test
+            @DisplayName("update() lanza excepción si Categoria no existe")
+            void updateWithNonExistingCategoria() {
+                // Arrange
+                FunkoRequestDto dto = new FunkoRequestDto("Funko Actualizado", 29.99, 99L, LocalDate.of(2020, 3, 3));
+                when(funkoRepository.findById(1L)).thenReturn(Optional.of(funko1)); // El Funko sí existe
+                when(categoriaRepository.findById(99L)).thenReturn(Optional.empty()); // Pero la nueva Categoria no
 
-            // Assert - Verificamos que repository.getById se llama una vez
-            // Este comportamiento SOLO es válido cuando se ejecuta con caché real activa
-            // En pruebas unitarias, realmente se llamará dos veces
-            verify(repository, times(2)).getById(1L);
+                // Act & Assert
+                FunkoException exception = assertThrows(FunkoException.class, () -> funkoService.update(1L, dto));
+                assertEquals("Categoría no encontrada con ID: 99", exception.getMessage());
+                verify(funkoRepository).findById(1L);
+                verify(categoriaRepository).findById(99L);
+                verify(funkoRepository, never()).save(any());
+            }
 
-            // Nota: Para probar realmente la caché, necesitaríamos tests de integración
-            // con un CacheManager real configurado
+            @Test
+            @DisplayName("patch() lanza excepción si Categoria no existe")
+            void patchWithNonExistingCategoria() {
+                // Arrange
+                FunkoRequestDto dto = new FunkoRequestDto(null, null, 99L, null); // Solo se actualiza la categoría
+                when(funkoRepository.findById(1L)).thenReturn(Optional.of(funko1)); // El Funko sí existe
+                when(categoriaRepository.findById(99L)).thenReturn(Optional.empty()); // Pero la nueva Categoria no
+
+                // Act & Assert
+                FunkoException exception = assertThrows(FunkoException.class, () -> funkoService.patch(1L, dto));
+                assertEquals("Categoría no encontrada con ID: 99", exception.getMessage());
+                verify(funkoRepository).findById(1L);
+                verify(categoriaRepository).findById(99L);
+                verify(funkoRepository, never()).save(any());
+            }
+
+            @Test
+            @DisplayName("create() lanza excepción si CategoriaId es nulo")
+            void createWithNullCategoriaId() {
+                // Arrange
+                FunkoRequestDto dto = new FunkoRequestDto("Nuevo Funko", 29.99, null, LocalDate.of(2020, 3, 3));
+
+                // Act & Assert
+                FunkoException exception = assertThrows(FunkoException.class, () -> funkoService.create(dto));
+                assertEquals("El ID de la categoría no puede ser nulo", exception.getMessage());
+                verify(categoriaRepository, never()).findById(any());
+                verify(funkoRepository, never()).save(any());
+            }
         }
     }
 }

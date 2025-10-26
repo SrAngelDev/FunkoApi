@@ -1,4 +1,4 @@
-package srangeldev.funkoapi.controllers;
+package srangeldev.funkoapi.Funko.controllers;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
@@ -12,21 +12,22 @@ import org.mockito.MockitoAnnotations;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
-import srangeldev.funkoapi.Funko.controllers.FunkoController;
+import srangeldev.funkoapi.Categoria.dto.CategoriaResponseDto; // IMPORTADO
+import srangeldev.funkoapi.Categoria.models.Categoria; // IMPORTADO
 import srangeldev.funkoapi.Funko.dto.FunkoRequestDto;
 import srangeldev.funkoapi.Funko.dto.FunkoResponseDto;
 import srangeldev.funkoapi.Funko.exceptions.FunkoException;
 import srangeldev.funkoapi.Funko.exceptions.FunkoNotFoundException;
-import srangeldev.funkoapi.expections.GlobalExceptionHandler;
 import srangeldev.funkoapi.Funko.mappers.FunkoMapper;
 import srangeldev.funkoapi.Funko.models.Funko;
-import srangeldev.funkoapi.Funko.models.enums.Categoria;
 import srangeldev.funkoapi.Funko.services.FunkoService;
+import srangeldev.funkoapi.expections.GlobalExceptionHandler; // Asegúrate que la ruta sea correcta
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
+import java.util.UUID; // IMPORTADO
 
 import static org.hamcrest.Matchers.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -52,12 +53,28 @@ class FunkoControllerTest {
 
     private ObjectMapper objectMapper;
 
-    // Datos de prueba
+    // --- DATOS DE PRUEBA REESTRUCTURADOS ---
+
+    // Categorias
+    private final Categoria cat1 = new Categoria(1L, "SERIES", LocalDateTime.now(), LocalDateTime.now());
+    private final Categoria cat2 = new Categoria(2L, "PELICULAS", LocalDateTime.now(), LocalDateTime.now());
+    private final Categoria cat3 = new Categoria(3L, "VIDEOJUEGOS", LocalDateTime.now(), LocalDateTime.now());
+
+    // Categoria DTOs
+    private final CategoriaResponseDto catResponse1 = new CategoriaResponseDto(1L, "SERIES", cat1.getCreatedAt(), cat1.getUpdatedAt());
+    private final CategoriaResponseDto catResponse2 = new CategoriaResponseDto(2L, "PELICULAS", cat2.getCreatedAt(), cat2.getUpdatedAt());
+
+    // UUIDs
+    private final UUID uuid1 = UUID.randomUUID();
+    private final UUID uuid2 = UUID.randomUUID();
+
+    // Funkos (Entidad)
     private final Funko funko1 = new Funko(
             1L,
+            uuid1,
             "Funko 1",
             19.99,
-            Categoria.SERIES,
+            cat1, // Objeto Categoria
             LocalDate.of(2020, 1, 1),
             LocalDateTime.now(),
             LocalDateTime.now()
@@ -65,50 +82,57 @@ class FunkoControllerTest {
 
     private final Funko funko2 = new Funko(
             2L,
+            uuid2,
             "Funko 2",
             29.99,
-            Categoria.PELICULAS,
+            cat2, // Objeto Categoria
             LocalDate.of(2021, 2, 2),
             LocalDateTime.now(),
             LocalDateTime.now()
     );
 
+    // FunkoResponseDto
     private final FunkoResponseDto responseDTO1 = new FunkoResponseDto(
             1L,
+            uuid1,
             "Funko 1",
             19.99,
-            Categoria.SERIES,
+            catResponse1, // Objeto CategoriaResponseDto
             LocalDate.of(2020, 1, 1),
-            LocalDateTime.now(),
-            LocalDateTime.now()
+            funko1.getCreatedAt(),
+            funko1.getUpdatedAt()
     );
 
     private final FunkoResponseDto responseDTO2 = new FunkoResponseDto(
             2L,
+            uuid2,
             "Funko 2",
             29.99,
-            Categoria.PELICULAS,
+            catResponse2, // Objeto CategoriaResponseDto
             LocalDate.of(2021, 2, 2),
-            LocalDateTime.now(),
-            LocalDateTime.now()
+            funko2.getCreatedAt(),
+            funko2.getUpdatedAt()
     );
 
+    // FunkoRequestDto (Usa categoriaId)
     private final FunkoRequestDto createDTO = new FunkoRequestDto(
             "Nuevo Funko",
             39.99,
-            Categoria.VIDEOJUEGOS,
+            3L, // categoriaId
             LocalDate.of(2022, 3, 3)
     );
+    // --- FIN DE DATOS DE PRUEBA ---
+
 
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
         objectMapper = new ObjectMapper();
-        objectMapper.registerModule(new JavaTimeModule()); // Para serializar/deserializar fechas
+        objectMapper.registerModule(new JavaTimeModule());
 
-        // Configuración global de excepciones
         mockMvc = MockMvcBuilders.standaloneSetup(controller)
-                .setControllerAdvice(new GlobalExceptionHandler())
+                // Asegúrate que esta ruta a tu GlobalExceptionHandler es correcta
+                .setControllerAdvice(new srangeldev.funkoapi.expections.GlobalExceptionHandler())
                 .build();
     }
 
@@ -128,7 +152,7 @@ class FunkoControllerTest {
             when(mapper.toResponse(funko2)).thenReturn(responseDTO2);
 
             // Act & Assert
-            mockMvc.perform(get("/funkos"))
+            mockMvc.perform(get("/api/funkos")) // RUTA CORRECTA
                     .andExpect(status().isOk())
                     .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                     .andExpect(jsonPath("$", hasSize(2)))
@@ -148,13 +172,14 @@ class FunkoControllerTest {
             when(mapper.toResponse(funko1)).thenReturn(responseDTO1);
 
             // Act & Assert
-            mockMvc.perform(get("/funkos/1"))
+            mockMvc.perform(get("/api/funkos/1")) // RUTA CORRECTA
                     .andExpect(status().isOk())
                     .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                     .andExpect(jsonPath("$.id", is(1)))
                     .andExpect(jsonPath("$.nombre", is("Funko 1")))
                     .andExpect(jsonPath("$.precio", is(19.99)))
-                    .andExpect(jsonPath("$.categoria", is("SERIES")));
+                    // JSONPATH CORRECTO para objeto anidado
+                    .andExpect(jsonPath("$.categoria.nombre", is("SERIES")));
 
             verify(funkoService).getById(1L);
             verify(mapper).toResponse(funko1);
@@ -168,11 +193,11 @@ class FunkoControllerTest {
             when(mapper.toResponse(funko1)).thenReturn(responseDTO1);
 
             // Act & Assert
-            mockMvc.perform(post("/funkos")
+            mockMvc.perform(post("/api/funkos") // RUTA CORRECTA
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(createDTO)))
                     .andExpect(status().isCreated())
-                    .andExpect(header().string("Location", "/api/funkos/1"))
+                    .andExpect(header().string("Location", "/api/funkos/1")) // RUTA CORRECTA
                     .andExpect(jsonPath("$.id", is(1)))
                     .andExpect(jsonPath("$.nombre", is("Funko 1")));
 
@@ -188,7 +213,7 @@ class FunkoControllerTest {
             when(mapper.toResponse(funko1)).thenReturn(responseDTO1);
 
             // Act & Assert
-            mockMvc.perform(put("/funkos/1")
+            mockMvc.perform(put("/api/funkos/1") // RUTA CORRECTA
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(createDTO)))
                     .andExpect(status().isOk())
@@ -203,13 +228,14 @@ class FunkoControllerTest {
         @DisplayName("patch() actualiza parcialmente un funko existente")
         void patchExistingFunko() throws Exception {
             // Arrange
+            // DTO adaptado a FunkoRequestDto (String, Double, Long, LocalDate)
             FunkoRequestDto patchDTO = new FunkoRequestDto(null, 15.99, null, null);
 
             when(funkoService.patch(eq(1L), any(FunkoRequestDto.class))).thenReturn(funko1);
             when(mapper.toResponse(funko1)).thenReturn(responseDTO1);
 
             // Act & Assert
-            mockMvc.perform(patch("/funkos/1")
+            mockMvc.perform(patch("/api/funkos/1") // RUTA CORRECTA
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(patchDTO)))
                     .andExpect(status().isOk())
@@ -224,7 +250,7 @@ class FunkoControllerTest {
         @DisplayName("delete() elimina un funko existente")
         void deleteExistingFunko() throws Exception {
             // Act & Assert
-            mockMvc.perform(delete("/funkos/1"))
+            mockMvc.perform(delete("/api/funkos/1")) // RUTA CORRECTA
                     .andExpect(status().isNoContent());
 
             verify(funkoService).delete(1L);
@@ -242,7 +268,7 @@ class FunkoControllerTest {
             when(mapper.toResponse(funko2)).thenReturn(responseDTO2);
 
             // Act & Assert - probar la ruta vacía
-            mockMvc.perform(get("/funkos/"))
+            mockMvc.perform(get("/api/funkos/")) // RUTA CORRECTA
                     .andExpect(status().isOk())
                     .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                     .andExpect(jsonPath("$", hasSize(2)));
@@ -262,7 +288,7 @@ class FunkoControllerTest {
             when(funkoService.getById(99L)).thenThrow(new FunkoNotFoundException(99L));
 
             // Act & Assert
-            mockMvc.perform(get("/funkos/99"))
+            mockMvc.perform(get("/api/funkos/99")) // RUTA CORRECTA
                     .andExpect(status().isNotFound());
 
             verify(funkoService).getById(99L);
@@ -271,16 +297,16 @@ class FunkoControllerTest {
         @Test
         @DisplayName("create() devuelve 400 con datos inválidos")
         void createInvalidData() throws Exception {
-            // Arrange - DTO con campos inválidos
+            // Arrange - DTO con campos inválidos (adaptado a la nueva estructura)
             FunkoRequestDto invalidDTO = new FunkoRequestDto(
-                    "", // Nombre vacío
-                    -10.0, // Precio negativo
-                    null, // Categoría null
-                    null  // Fecha null
+                    "",     // Nombre vacío
+                    -10.0,  // Precio negativo
+                    null,   // CategoriaId null
+                    null    // Fecha null
             );
 
             // Act & Assert
-            mockMvc.perform(post("/funkos")
+            mockMvc.perform(post("/api/funkos") // RUTA CORRECTA
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(invalidDTO)))
                     .andExpect(status().isBadRequest());
@@ -294,7 +320,7 @@ class FunkoControllerTest {
                     .thenThrow(new FunkoException("Error de negocio"));
 
             // Act & Assert
-            mockMvc.perform(post("/funkos")
+            mockMvc.perform(post("/api/funkos") // RUTA CORRECTA
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(createDTO)))
                     .andExpect(status().isBadRequest())
@@ -311,7 +337,7 @@ class FunkoControllerTest {
                     .thenThrow(new FunkoNotFoundException(99L));
 
             // Act & Assert
-            mockMvc.perform(put("/funkos/99")
+            mockMvc.perform(put("/api/funkos/99") // RUTA CORRECTA
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(createDTO)))
                     .andExpect(status().isNotFound());
@@ -322,16 +348,16 @@ class FunkoControllerTest {
         @Test
         @DisplayName("update() devuelve 400 con datos inválidos")
         void updateInvalidData() throws Exception {
-            // Arrange - DTO con campos inválidos
+            // Arrange - DTO con campos inválidos (adaptado)
             FunkoRequestDto invalidDTO = new FunkoRequestDto(
-                    "", // Nombre vacío
-                    -10.0, // Precio negativo
-                    null, // Categoría null
-                    null  // Fecha null
+                    "",
+                    -10.0,
+                    null,
+                    null
             );
 
             // Act & Assert
-            mockMvc.perform(put("/funkos/1")
+            mockMvc.perform(put("/api/funkos/1") // RUTA CORRECTA
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(invalidDTO)))
                     .andExpect(status().isBadRequest());
@@ -347,7 +373,7 @@ class FunkoControllerTest {
                     .thenThrow(new FunkoNotFoundException(99L));
 
             // Act & Assert
-            mockMvc.perform(patch("/funkos/99")
+            mockMvc.perform(patch("/api/funkos/99") // RUTA CORRECTA
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(patchDTO)))
                     .andExpect(status().isNotFound());
@@ -365,7 +391,7 @@ class FunkoControllerTest {
                     .thenThrow(new FunkoException("El precio debe ser mayor que 0"));
 
             // Act & Assert
-            mockMvc.perform(patch("/funkos/1")
+            mockMvc.perform(patch("/api/funkos/1") // RUTA CORRECTA
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(patchDTO)))
                     .andExpect(status().isBadRequest())
@@ -381,7 +407,7 @@ class FunkoControllerTest {
             doThrow(new FunkoNotFoundException(99L)).when(funkoService).delete(99L);
 
             // Act & Assert
-            mockMvc.perform(delete("/funkos/99"))
+            mockMvc.perform(delete("/api/funkos/99")) // RUTA CORRECTA
                     .andExpect(status().isNotFound());
 
             verify(funkoService).delete(99L);

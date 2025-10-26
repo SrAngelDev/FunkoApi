@@ -16,8 +16,8 @@ public class CategoriaMapper {
         return new Categoria(
                 null,
                 dto.getNombre(),
-                null, // createdAt será gestionado por JPA Auditing
-                null  // updatedAt será gestionado por JPA Auditing
+                null, // createdAt es gestionado por JPA
+                null  // updatedAt es gestionado por JPA
         );
     }
 
