@@ -1,5 +1,6 @@
 plugins {
     java
+    jacoco
     id("org.springframework.boot") version "3.3.4"
     id("io.spring.dependency-management") version "1.1.6"
     id("io.freefair.lombok") version "9.0.0"
@@ -38,15 +39,27 @@ dependencies {
 
 tasks.withType<Test> {
     useJUnitPlatform()
+    finalizedBy(tasks.jacocoTestReport)
 }
 
 tasks.jar {
     manifest {
-        // Clase principal
         attributes["Main-Class"] = "srangeldev.Main"
     }
-    // Incluir dependencias
     from(configurations.runtimeClasspath.get().map { if (it.isDirectory) it else zipTree(it) })
-    // Excluir duplicados
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+}
+
+jacoco {
+    toolVersion = "0.8.14"
+}
+
+// Configura la tarea de reporte de JaCoCo
+tasks.named<JacocoReport>("jacocoTestReport") {
+    dependsOn(tasks.named<Test>("test"))
+    reports {
+        xml.required.set(true)
+        csv.required.set(false)
+        html.outputLocation.set(layout.buildDirectory.dir("reports/jacoco/html"))
+    }
 }
